@@ -117,4 +117,28 @@ class OdooService
 
         return $result[0] ?? [];
     }
+
+    public function getOrders(int $limit = 10, int $offset = 0): array
+{
+    return $this->executeKw(
+        'sale.order',
+        'search_read',
+        [
+            []
+        ],
+        [
+            'fields' => [
+                'id',
+                'name',
+                'partner_id',
+                'amount_total',
+                'state',
+                'date_order'
+            ],
+            'limit'  => $limit,
+            'offset' => $offset,
+            'order'  => 'id asc',
+        ]
+    );
+}
 }

@@ -26,3 +26,13 @@ Route::get('/productos/{id}', function ($id, OdooService $odoo) {
 
     return response()->json($product);
 });
+
+// GET Ordenes
+Route::get('/ordenes', function (OdooService $odoo) {
+    $limit = min((int) request()->get('limit', 10), 100);
+    $offset = (int) request()->get('offset', 0);
+
+    return response()->json(
+        $odoo->getOrders($limit, $offset)
+    );
+});
