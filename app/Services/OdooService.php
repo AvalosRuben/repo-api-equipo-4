@@ -84,22 +84,22 @@ class OdooService
     }
 
 
-    public function getProducts(int $limit = 10, int $offset = 0): array
-    {
-        return $this->executeKw(
-            'product.template',
-            'search_read',
-            [
-                []
-            ],
-            [
-                'fields' => ['id', 'name', 'list_price'],
-                'limit'  => $limit,
-                'offset' => $offset,
-                'order'  => 'id asc',
-            ]
-        );
-    }
+    // public function getProducts(int $limit = 10, int $offset = 0): array
+    // {
+    //     return $this->executeKw(
+    //         'product.template',
+    //         'search_read',
+    //         [
+    //             []
+    //         ],
+    //         [
+    //             'fields' => ['id', 'name', 'list_price'],
+    //             'limit'  => $limit,
+    //             'offset' => $offset,
+    //             'order'  => 'id asc',
+    //         ]
+    //     );
+    // }
 
     public function getProductById(int $id): array
     {
@@ -124,7 +124,8 @@ class OdooService
         'sale.order',
         'search_read',
         [
-            []
+            // solo pedidos que no esten cancelados
+            [['state', '!=', 'cancel']]
         ],
         [
             'fields' => [
@@ -148,7 +149,7 @@ class OdooService
             'product.template',
             'search_read',
             [
-                [['sale_ok', '=', true]] //productos que se pdan vender
+                [['sale_ok', '=', true]] //productos que se puedan vender
             ],
             [
                 'fields' => ['id', 'name', 'list_price', 'categ_id', 'description_sale'],
