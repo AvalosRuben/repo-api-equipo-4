@@ -177,7 +177,7 @@ class OdooService
     );
 }
 
-public function getProviders(int $limit = 10, int $offset = 0): array
+public function getSuppliers(int $limit = 10, int $offset = 0): array
     {
         return $this->executeKw(
             'res.partner',
