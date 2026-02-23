@@ -36,3 +36,13 @@ Route::get('/ordenes', function (OdooService $odoo) {
         $odoo->getOrders($limit, $offset)
     );
 });
+
+// GET Proveedores
+Route::get('/proveedores', function (OdooService $odoo) {
+    $limit = min((int) request()->get('limit', 10), 100);
+    $offset = (int) request()->get('offset', 0);
+
+    return response()->json(
+        $odoo->getSuppliers($limit, $offset)
+    );
+});
