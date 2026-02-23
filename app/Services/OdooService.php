@@ -157,6 +157,35 @@ class OdooService
                 'offset' => $offset,
                 'order'  => 'id asc',
             ]
-        )
+        );
+    }
+
+    public function getCategoriesByProducts(int $limit = 100, int $offset = 0): array
+    {
+        $products = $this->getProducts($limit, $offset);
+        $categories = [];
+
+        foreach ($products as $product) {
+            $categoryId = $product['categ_id'][0] ?? null;
+            $categoryName = $product['categ_id'][1] ?? 'Sin categoría';
+            $key = (string) ($categoryId ?? 'none');
+
+            if (!isset($categories[$key])) {
+                $categories[$key] = [
+                    'id' => $categoryId,
+                    'name' => $categoryName,
+                    'products' => [],
+                ];
+            }
+
+            $categories[$key]['products'][] = [
+                'id' => $product['id'] ?? null,
+                'name' => $product['name'] ?? null,
+                'list_price' => $product['list_price'] ?? null,
+                'description_sale' => $product['description_sale'] ?? null,
+            ];
+        }
+
+        return array_values($categories);
     }
 }
