@@ -176,4 +176,21 @@ class OdooService
         ]
     );
 }
+
+public function getSuppliers(int $limit = 10, int $offset = 0): array
+    {
+        return $this->executeKw(
+            'res.partner',
+            'search_read',
+            [
+                [['supplier_rank', '>', 0]] //solo proveedores
+            ],
+            [
+                'fields' => ['id', 'name', 'email', 'phone'],
+                'limit'  => $limit,
+                'offset' => $offset,
+                'order'  => 'id asc',
+            ]
+        );
+    }
 }
