@@ -118,6 +118,41 @@ class OdooService
         return $result[0] ?? [];
     }
 
+    # Basically the same as getProducts except it shows their stock instead. Incredible thanks mejia
+     public function getStock(int $limit = 10, int $offset = 0): array
+    {
+        return $this->executeKw(
+            'product.template',
+            'search_read',
+            [
+                []
+            ],
+            [
+                'fields' => ['id', 'name', 'qty_available'],
+                'limit'  => $limit,
+                'offset' => $offset,
+                'order'  => 'id desc',
+            ]
+        );
+    }
+
+    public function getStockById(int $id): array
+    {
+        $result = $this->executeKw(
+            'product.template',
+            'search_read',
+            [
+                [['id', '=', $id]]
+            ],
+            [
+                'fields' => ['id', 'name', 'list_price'],
+                'limit'  => 1,
+            ]
+        );
+
+        return $result[0] ?? [];
+    }
+
     public function getOrders(int $limit = 10, int $offset = 0): array
 {
     return $this->executeKw(
