@@ -57,7 +57,7 @@ class OdooService
         return $this->uid;
     }
 
-    public function executeKw(string $model, string $method, array $args = [], array $kwargs = [])
+    public function executeKw(string $model, string $method, array $args = [], array $kwargs = []): mixed
     {
         $uid = $this->login();
 
@@ -141,8 +141,7 @@ class OdooService
             'order'  => 'id asc',
         ]
     );
-}
-
+    }
     public function getProducts(int $limit = 100, int $offset = 0): array
     {
         return $this->executeKw(
@@ -157,6 +156,23 @@ class OdooService
                 'offset' => $offset,
                 'order'  => 'id asc',
             ]
-        )
+        );
+    }
+
+    public function getProviders(int $limit = 10, int $offset = 0): array
+    {
+        return $this->executeKw(
+            'res.partner',
+            'search_read',
+            [
+                [['supplier_rank', '>', 0]] //solo proveedores
+            ],
+            [
+                'fields' => ['id', 'name', 'email', 'phone'],
+                'limit'  => $limit,
+                'offset' => $offset,
+                'order'  => 'id asc',
+            ]
+        );
     }
 }
