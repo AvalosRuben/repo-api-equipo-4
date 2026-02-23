@@ -57,7 +57,7 @@ class OdooService
         return $this->uid;
     }
 
-    public function executeKw(string $model, string $method, array $args = [], array $kwargs = [])
+    public function executeKw(string $model, string $method, array $args = [], array $kwargs = []): mixed
     {
         $uid = $this->login();
 
@@ -119,29 +119,29 @@ class OdooService
     }
 
     public function getOrders(int $limit = 10, int $offset = 0): array
-{
-    return $this->executeKw(
-        'sale.order',
-        'search_read',
-        [
-            // solo pedidos que no esten cancelados
-            [['state', '!=', 'cancel']]
-        ],
-        [
-            'fields' => [
-                'id',
-                'name',
-                'partner_id',
-                'amount_total',
-                'state',
-                'date_order'
+    {
+        return $this->executeKw(
+            'sale.order',
+            'search_read',
+            [
+                // solo pedidos que no esten cancelados
+                [['state', '!=', 'cancel']]
             ],
-            'limit'  => $limit,
-            'offset' => $offset,
-            'order'  => 'id asc',
-        ]
-    );
-}
+            [
+                'fields' => [
+                    'id',
+                    'name',
+                    'partner_id',
+                    'amount_total',
+                    'state',
+                    'date_order'
+                ],
+                'limit'  => $limit,
+                'offset' => $offset,
+                'order'  => 'id asc',
+            ]
+        );
+    }
 
     public function getProducts(int $limit = 100, int $offset = 0): array
     {
@@ -187,5 +187,22 @@ class OdooService
         }
 
         return array_values($categories);
+    }
+
+    public function getProviders(int $limit = 10, int $offset = 0): array
+    {
+        return $this->executeKw(
+            'res.partner',
+            'search_read',
+            [
+                [['supplier_rank', '>', 0]] //solo proveedores
+            ],
+            [
+                'fields' => ['id', 'name', 'email', 'phone'],
+                'limit'  => $limit,
+                'offset' => $offset,
+                'order'  => 'id asc',
+            ]
+        );
     }
 }
