@@ -19,3 +19,4 @@ Route::get('api/products/categories', [ProductCategoryController::class, 'index'
     ->name('api.products.categories');
 
 require __DIR__.'/settings.php';
+require __DIR__.'/settings.php';
