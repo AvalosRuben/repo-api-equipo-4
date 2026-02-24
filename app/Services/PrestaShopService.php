@@ -46,4 +46,67 @@ class PrestaShopService
       return json_decode($response, true);
     }
 
+    public function getCustomers(): array
+{
+    $url = $this->url;
+    $ws_key = $this->ws_key;
+
+    $response = Http::get(
+        "{$url}/customers?display=full&output_format=JSON&ws_key={$ws_key}"
+    );
+
+    if (!$response->successful()) {
+        throw new \Exception('Error al obtener clientes de PrestaShop');
+    }
+
+    return $response->json();
+}
+public function getProductBySku(string $sku): array
+{
+    $url = $this->url;
+    $ws_key = $this->ws_key;
+
+    $response = Http::get("{$url}/products", [
+        'filter[reference]' => sprintf('["%s"]', $sku),
+        'display' => 'full',
+        'output_format' => 'JSON',
+        'ws_key' => $ws_key,
+    ]);
+
+    if (!$response->successful()) {
+        return [
+            'status' => 'error',
+            'data' => null,
+            'errors' => [
+                [
+                    'code' => (string) $response->status(),
+                    'message' => 'ErrorFetching'
+                ]
+            ]
+        ];
+    }
+
+    $data = $response->json();
+    $products = $data['products'] ?? $data;
+
+    if (empty($products)) {
+        return [
+            'status' => 'error',
+            'data' => null,
+            'errors' => [
+                [
+                    'code' => '404',
+                    'message' => 'NotFound'
+                ]
+            ]
+        ];
+    }
+
+    return [
+        'status' => 'success',
+        'data' => $products,
+        'errors' => []
+    ];
+}
+
 }

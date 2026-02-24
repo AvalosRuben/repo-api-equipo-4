@@ -90,4 +90,12 @@ Route::get('/prestashop/ordenes', function (PrestaShopService $prestashop) {
     return response()->json(
         $prestashop->getOrders()
     );
+Route::get('/prestashop/clientes', function (PrestaShopService $prestashop) {
+    return response()->json(
+        $prestashop->getCustomers()
+    );
+});
+
+Route::get('/prestashop/productos/clave/{clave}', function ($clave, App\Services\PrestaShopService $prestashop) {
+    return response()->json($prestashop->getProductBySku($clave));
 });
