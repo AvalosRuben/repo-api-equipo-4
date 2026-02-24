@@ -31,4 +31,19 @@ class PrestaShopService
       return json_decode($response, true);
     }
 
+    public function getProducts(): array
+    {
+      $url = $this->url;
+      $ws_key = $this->ws_key;
+      $response = Http::get("{$url}/products&display=full&output_format=JSON&ws_key={$ws_key}", []);
+      return json_decode($response, true);
+    }
+    public function getOrders(): array
+    {
+      $url = $this->url;
+      $ws_key = $this->ws_key;
+      $response = Http::get("{$url}/orders&display=full&output_format=JSON&ws_key={$ws_key}", []);
+      return json_decode($response, true);
+    }
+
 }
