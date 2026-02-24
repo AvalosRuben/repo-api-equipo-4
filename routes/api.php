@@ -80,3 +80,9 @@ Route::get('/prestashop/proveedores', function (PrestaShopService $prestashop) {
         $prestashop->getSuppliers()
     );
 });
+
+Route::get('/prestashop/clientes', function (PrestaShopService $prestashop) {
+    return response()->json(
+        $prestashop->getCustomers()
+    );
+});
