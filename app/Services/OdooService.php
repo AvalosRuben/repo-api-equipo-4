@@ -57,7 +57,7 @@ class OdooService
         return $this->uid;
     }
 
-    public function executeKw(string $model, string $method, array $args = [], array $kwargs = [])
+    public function executeKw(string $model, string $method, array $args = [], array $kwargs = []): mixed
     {
         $uid = $this->login();
 
@@ -84,22 +84,22 @@ class OdooService
     }
 
 
-    public function getProducts(int $limit = 10, int $offset = 0): array
-    {
-        return $this->executeKw(
-            'product.template',
-            'search_read',
-            [
-                []
-            ],
-            [
-                'fields' => ['id', 'name', 'list_price'],
-                'limit'  => $limit,
-                'offset' => $offset,
-                'order'  => 'id asc',
-            ]
-        );
-    }
+    // public function getProducts(int $limit = 10, int $offset = 0): array
+    // {
+    //     return $this->executeKw(
+    //         'product.template',
+    //         'search_read',
+    //         [
+    //             []
+    //         ],
+    //         [
+    //             'fields' => ['id', 'name', 'list_price'],
+    //             'limit'  => $limit,
+    //             'offset' => $offset,
+    //             'order'  => 'id asc',
+    //         ]
+    //     );
+    // }
 
     public function getProductById(int $id): array
     {
@@ -118,66 +118,78 @@ class OdooService
         return $result[0] ?? [];
     }
 
-    # Basically the same as getProducts except it shows their stock instead. Incredible thanks mejia
-     public function getStock(int $limit = 10, int $offset = 0): array
+    public function getOrders(int $limit = 10, int $offset = 0): array
+    {
+        return $this->executeKw(
+            'sale.order',
+            'search_read',
+            [
+                // solo pedidos que no esten cancelados
+                [['state', '!=', 'cancel']]
+            ],
+            [
+                'fields' => [
+                    'id',
+                    'name',
+                    'partner_id',
+                    'amount_total',
+                    'state',
+                    'date_order'
+                ],
+                'limit'  => $limit,
+                'offset' => $offset,
+                'order'  => 'id asc',
+            ]
+        );
+    }
+
+    public function getProducts(int $limit = 100, int $offset = 0): array
     {
         return $this->executeKw(
             'product.template',
             'search_read',
             [
-                []
+                [['sale_ok', '=', true]] //productos que se puedan vender
             ],
             [
-                'fields' => ['id', 'name', 'qty_available'],
+                'fields' => ['id', 'name', 'list_price', 'categ_id', 'description_sale'],
                 'limit'  => $limit,
                 'offset' => $offset,
-                'order'  => 'id desc',
+                'order'  => 'id asc',
             ]
         );
     }
 
-    public function getStockById(int $id): array
+    public function getCategoriesByProducts(int $limit = 100, int $offset = 0): array
     {
-        $result = $this->executeKw(
-            'product.template',
-            'search_read',
-            [
-                [['id', '=', $id]]
-            ],
-            [
-                'fields' => ['id', 'name', 'list_price'],
-                'limit'  => 1,
-            ]
-        );
+        $products = $this->getProducts($limit, $offset);
+        $categories = [];
 
-        return $result[0] ?? [];
+        foreach ($products as $product) {
+            $categoryId = $product['categ_id'][0] ?? null;
+            $categoryName = $product['categ_id'][1] ?? 'Sin categoría';
+            $key = (string) ($categoryId ?? 'none');
+
+            if (!isset($categories[$key])) {
+                $categories[$key] = [
+                    'id' => $categoryId,
+                    'name' => $categoryName,
+                    'products' => [],
+                ];
+            }
+
+            $categories[$key]['products'][] = [
+                'id' => $product['id'] ?? null,
+                'name' => $product['name'] ?? null,
+                'list_price' => $product['list_price'] ?? null,
+                'description_sale' => $product['description_sale'] ?? null,
+            ];
+        }
+
+        return array_values($categories);
     }
 
-    public function getOrders(int $limit = 10, int $offset = 0): array
-{
-    return $this->executeKw(
-        'sale.order',
-        'search_read',
-        [
-            []
-        ],
-        [
-            'fields' => [
-                'id',
-                'name',
-                'partner_id',
-                'amount_total',
-                'state',
-                'date_order'
-            ],
-            'limit'  => $limit,
-            'offset' => $offset,
-            'order'  => 'id asc',
-        ]
-    );
-}
-
-public function getSuppliers(int $limit = 10, int $offset = 0): array
+    public function getProviders(int $limit = 10, int $offset = 0): array
     {
         return $this->executeKw(
             'res.partner',
