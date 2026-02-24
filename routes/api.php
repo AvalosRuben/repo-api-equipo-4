@@ -5,7 +5,7 @@ use App\Services\OdooService;
 
 
 // GET  - 10 en 10
-Route::get('/productos', function (OdooService $odoo) {
+Route::get('/odoo/productos', function (OdooService $odoo) {
     $limit = (int) request()->get('limit', 10);
     $offset = (int) request()->get('offset', 0);
 
@@ -15,7 +15,7 @@ Route::get('/productos', function (OdooService $odoo) {
 });
 
 // GET por id indv
-Route::get('/productos/{id}', function ($id, OdooService $odoo) {
+Route::get('/odoo/productos/{id}', function ($id, OdooService $odoo) {
     $product = $odoo->getProductById((int) $id);
 
     if (empty($product)) {
@@ -27,7 +27,7 @@ Route::get('/productos/{id}', function ($id, OdooService $odoo) {
     return response()->json($product);
 });
 
-Route::get('/stock/', function (OdooService $odoo) {
+Route::get('/odoo/stock/', function (OdooService $odoo) {
     $limit = (int) request()->get('limit', 10);
     $offset = (int) request()->get('offset', 0);
 
@@ -36,7 +36,7 @@ Route::get('/stock/', function (OdooService $odoo) {
     );
 });
 
-Route::get('/stock/{id}', function ($id, OdooService $odoo) {
+Route::get('/odoo/stock/{id}', function ($id, OdooService $odoo) {
     $product = $odoo->getStockById((int) $id);
 
     if (empty($product)) {
@@ -49,7 +49,7 @@ Route::get('/stock/{id}', function ($id, OdooService $odoo) {
 });
 
 // GET Ordenes
-Route::get('/ordenes', function (OdooService $odoo) {
+Route::get('/odoo/ordenes', function (OdooService $odoo) {
     $limit = min((int) request()->get('limit', 10), 100);
     $offset = (int) request()->get('offset', 0);
 
@@ -59,7 +59,7 @@ Route::get('/ordenes', function (OdooService $odoo) {
 });
 
 // GET Proveedores
-Route::get('/proveedores', function (OdooService $odoo) {
+Route::get('/odoo/proveedores', function (OdooService $odoo) {
     $limit = min((int) request()->get('limit', 10), 100);
     $offset = (int) request()->get('offset', 0);
 
