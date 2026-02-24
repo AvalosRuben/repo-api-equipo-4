@@ -64,6 +64,6 @@ Route::get('/proveedores', function (OdooService $odoo) {
     $offset = (int) request()->get('offset', 0);
 
     return response()->json(
-        $odoo->getSuppliers($limit, $offset)
+        $odoo->getProviders($limit, $offset)
     );
 });
