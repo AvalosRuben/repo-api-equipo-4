@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Services\OdooService;
 use App\Services\PrestaShopService;
 
-
 // GET  - 10 en 10
 Route::get('/odoo/productos', function (OdooService $odoo) {
     $limit = (int) request()->get('limit', 10);
@@ -81,6 +80,16 @@ Route::get('/prestashop/proveedores', function (PrestaShopService $prestashop) {
     );
 });
 
+Route::get('/prestashop/productos', function (PrestaShopService $prestashop) {
+    return response()->json(
+        $prestashop->getProducts()
+    );
+});
+
+Route::get('/prestashop/ordenes', function (PrestaShopService $prestashop) {
+    return response()->json(
+        $prestashop->getOrders()
+    );
 Route::get('/prestashop/clientes', function (PrestaShopService $prestashop) {
     return response()->json(
         $prestashop->getCustomers()
