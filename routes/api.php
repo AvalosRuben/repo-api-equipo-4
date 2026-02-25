@@ -90,6 +90,7 @@ Route::get('/prestashop/ordenes', function (PrestaShopService $prestashop) {
     return response()->json(
         $prestashop->getOrders()
     );
+});
 Route::get('/prestashop/clientes', function (PrestaShopService $prestashop) {
     return response()->json(
         $prestashop->getCustomers()
@@ -98,4 +99,27 @@ Route::get('/prestashop/clientes', function (PrestaShopService $prestashop) {
 
 Route::get('/prestashop/productos/clave/{clave}', function ($clave, App\Services\PrestaShopService $prestashop) {
     return response()->json($prestashop->getProductBySku($clave));
+});
+// GET Orden por REFERENCE (Prestashop)
+Route::get('/prestashop/ordenes/{reference}', function ($reference, PrestaShopService $prestashop) {
+    $order = $prestashop->getOrderByReference($reference);
+
+    if (empty($order)) {
+        return response()->json([
+            'status' => 'error',
+            'data' => null,
+            'errors' => [
+                [
+                    'code' => '404',
+                    'message' => 'Order not found'
+                ]
+            ]
+        ], 404);
+    }
+
+    return response()->json([
+        'status' => 'success',
+        'data' => $order,
+        'errors' => []
+    ]);
 });

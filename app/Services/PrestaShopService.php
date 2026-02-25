@@ -1,13 +1,12 @@
 <?php
 
 namespace App\Services;
-use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Http;
 
 class PrestaShopService
 {
     protected string $url;
-    protected string $token;
+    protected string $ws_key;
 
     public function __construct()
     {
@@ -108,5 +107,30 @@ public function getProductBySku(string $sku): array
         'errors' => []
     ];
 }
+public function getOrderByReference(string $reference): ?array
+{
+    $url = $this->url;
+    $ws_key = $this->ws_key;
 
+    $response = Http::get("{$url}/orders", [
+        'filter[reference]' => sprintf('["%s"]', $reference),
+        'display' => 'full',
+        'output_format' => 'JSON',
+        'ws_key' => $ws_key,
+    ]);
+
+    if (!$response->successful()) {
+        return null;
+    }
+
+    $data = $response->json();
+
+    $orders = $data['orders'] ?? [];
+
+    if (empty($orders)) {
+        return null;
+    }
+
+    return $orders[0];
+}
 }
