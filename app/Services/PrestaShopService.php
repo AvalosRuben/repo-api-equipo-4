@@ -133,4 +133,38 @@ public function getOrderByReference(string $reference): ?array
 
     return $orders[0];
 }
+public function getOrders(): array
+{
+    $url = $this->url;
+    $ws_key = $this->ws_key;
+}
+    $response = Http::get("{$url}/orders", [
+        'display' => 'full',
+        'output_format' => 'JSON',
+        'ws_key' => $ws_key,
+    ]);
+
+    if (!$response->successful()) {
+        return [
+            'status' => 'error',
+            'data' => null,
+            'errors' => [
+                [
+                    'code' => (string) $response->status(),
+                    'message' => 'Error fetching orders from PrestaShop'
+                ]
+            ]
+        ];
+    }
+
+    $data = $response->json();
+
+    $orders = $data['orders'] ?? [];
+
+    return [
+        'status' => 'success',
+        'data' => $orders,
+        'errors' => []
+    ];
+}
 }
