@@ -133,11 +133,11 @@ public function getOrderByReference(string $reference): ?array
 
     return $orders[0];
 }
-public function getOrders(): array
+public function getOrders2(): array
 {
     $url = $this->url;
     $ws_key = $this->ws_key;
-}
+
     $response = Http::get("{$url}/orders", [
         'display' => 'full',
         'output_format' => 'JSON',
