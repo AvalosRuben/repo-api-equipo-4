@@ -223,4 +223,40 @@ class OdooService
             ]
         );
     }
+
+
+   public function getAllProducts(): array
+    {
+    $allProducts = [];
+    $offset      = 0;
+    $batchSize   = 100;
+
+    do {
+        $batch = $this->executeKw(
+            'product.template',
+            'search_read',
+            [[]],
+            [
+                'fields' => [
+                    'id',
+                    'name',
+                    'list_price',
+                    'qty_available',
+                    'default_code',
+                    'description',
+                ],
+                'limit'  => $batchSize,
+                'offset' => $offset,
+                'order'  => 'id asc',
+            ]
+        );
+
+        $allProducts = array_merge($allProducts, $batch);
+        $offset += $batchSize;
+
+    } while (count($batch) === $batchSize);
+
+    return $allProducts;
+}
+
 }

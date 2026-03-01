@@ -10,7 +10,7 @@ Route::get('/odoo/productos', function (OdooService $odoo) {
     $offset = (int) request()->get('offset', 0);
 
     return response()->json(
-        $odoo->getProducts($limit, $offset)
+        $odoo->getAllProducts($limit, $offset)
     );
 });
 
@@ -121,5 +121,83 @@ Route::get('/prestashop/ordenes/{reference}', function ($reference, PrestaShopSe
         'status' => 'success',
         'data' => $order,
         'errors' => []
+    ]);
+});
+
+
+
+Route::get('/sync/odoo-to-prestashop', function (OdooService $odoo, PrestaShopService $presta) {
+
+    $products = $odoo->getAllProducts();
+
+    $results = [
+        'creados'  => [],
+        'omitidos' => [],
+        'errores'  => [],
+    ];
+
+    foreach ($products as $product) {
+        $nombre = $product['name'] ?? 'Sin nombre';
+        $precio = (float)($product['list_price'] ?? 0);
+        $stock  = (int)($product['qty_available'] ?? 0);
+        $sku    = $product['default_code'] ?? null;
+
+        // Regla 1: no crear si precio $0 Y stock 0
+        if ($precio == 0 || $stock == 0) {
+            $results['omitidos'][] = [
+                'id'     => $product['id'],
+                'nombre' => $nombre,
+                'razon'  => 'Precio $0 o stock 0',
+            ];
+            continue;
+        }
+
+        // Regla 2: sin SKU no podemos detectar duplicados, omitir
+        if (empty($sku)) {
+            $results['omitidos'][] = [
+                'id'     => $product['id'],
+                'nombre' => $nombre,
+                'razon'  => 'Sin SKU/referencia',
+            ];
+            continue;
+        }
+
+        // Regla 3: no duplicar, verificar si ya existe en PrestaShop
+        $existe = $presta->getProductBySku($sku);
+        if ($existe['status'] === 'success') {
+            $results['omitidos'][] = [
+                'id'     => $product['id'],
+                'nombre' => $nombre,
+                'razon'  => 'Ya existe en PrestaShop',
+            ];
+            continue;
+        }
+
+        // Crear producto
+        $resultado = $presta->createProduct($product);
+
+        if ($resultado['status'] === 'success') {
+            $results['creados'][] = [
+            'id'           => $product['id'],
+            'nombre'       => $nombre,
+            'ps_id'        => $resultado['ps_id'] ?? null,
+        ];
+        } else {
+            $results['errores'][] = [
+                'id'      => $product['id'],
+                'nombre'  => $nombre,
+                'detalle' => $resultado['details'] ?? $resultado['message'],
+            ];
+        }
+    }
+
+    return response()->json([
+        'resumen' => [
+            'total_odoo' => count($products),
+            'creados'    => count($results['creados']),
+            'omitidos'   => count($results['omitidos']),
+            'errores'    => count($results['errores']),
+        ],
+        'detalle' => $results,
     ]);
 });

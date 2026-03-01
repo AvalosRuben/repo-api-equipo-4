@@ -167,4 +167,116 @@ public function getOrders2(): array
         'errors' => []
     ];
 }
+
+public function createProduct(array $product): array
+{
+    $url        = $this->url;
+    $ws_key     = $this->ws_key;
+
+    $name        = $product['name'] ?? 'Sin nombre';
+    $description = (!empty($product['description']) && $product['description'] !== false) 
+        ? $product['description'] 
+        : '';
+    $price       = number_format((float)($product['list_price'] ?? 0), 6, '.', '');
+    $reference   = $product['default_code'] ?? '';
+    $linkRewrite = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $name), '-'));
+
+   $xml = <<<XML
+    <?xml version="1.0" encoding="UTF-8"?>
+    <prestashop xmlns:xlink="http://www.w3.org/1999/xlink">
+    <product>
+        <state>1</state>
+        <price>{$price}</price>
+        <reference>{$reference}</reference>
+        <active>1</active>
+        <available_for_order>1</available_for_order>
+        <show_price>1</show_price>
+        <visibility>both</visibility>
+        <minimal_quantity>1</minimal_quantity>
+        <id_category_default>2</id_category_default>
+        <name>
+        <language id="1"><![CDATA[{$name}]]></language>
+        </name>
+        <description>
+        <language id="1"><![CDATA[{$description}]]></language>
+        </description>
+        <description_short>
+        <language id="1"><![CDATA[]]></language>
+        </description_short>
+        <link_rewrite>
+        <language id="1"><![CDATA[{$linkRewrite}]]></language>
+        </link_rewrite>
+        <associations>
+        <categories>
+            <category><id>2</id></category>
+        </categories>
+        </associations>
+    </product>
+    </prestashop>
+    XML;
+
+    $response = Http::withHeaders([
+        'Content-Type' => 'application/xml',
+    ])->withBody($xml, 'application/xml')
+      ->post("{$url}/products?ws_key={$ws_key}");
+
+    if (!$response->successful()) {
+        return [
+            'status'  => 'error',
+            'message' => 'Error al crear producto',
+            'details' => $response->body(),
+        ];
+    }
+
+    $createdXml = simplexml_load_string($response->body());
+    $productId  = (int)($createdXml->product->id ?? 0);
+
+    $stockResult = null;
+    if ($productId > 0 && isset($product['qty_available'])) {
+        $stockResult = $this->updateStock($productId, (int)$product['qty_available']);
+    }
+
+    return [
+        'status'       => 'success',
+        'message'      => "Producto '{$name}' creado con ID {$productId}",
+        'ps_id'        => $productId,
+    ];
+}
+
+private function updateStock(int $productId, int $quantity): void
+{
+    $url    = $this->url;
+    $ws_key = $this->ws_key;
+
+    $response = Http::get("{$url}/stock_availables", [
+        'filter[id_product]' => $productId,
+        'display'            => 'full',
+        'output_format'      => 'JSON',
+        'ws_key'             => $ws_key,
+    ]);
+
+    $data    = $response->json();
+    $stockId = $data['stock_availables'][0]['id'] ?? null;
+
+   $xml = <<<XML
+    <?xml version="1.0" encoding="UTF-8"?>
+    <prestashop xmlns:xlink="http://www.w3.org/1999/xlink">
+    <stock_available>
+        <id>{$stockId}</id>
+        <id_product>{$productId}</id_product>
+        <id_product_attribute>0</id_product_attribute>
+        <id_shop>1</id_shop>
+        <quantity>{$quantity}</quantity>
+        <depends_on_stock>0</depends_on_stock>
+        <out_of_stock>2</out_of_stock>
+    </stock_available>
+    </prestashop>
+    XML;
+
+    $putResponse = Http::withHeaders([
+        'Content-Type' => 'application/xml',
+    ])->withBody($xml, 'application/xml')
+      ->put("{$url}/stock_availables/{$stockId}?ws_key={$ws_key}");
+}
+
 }
