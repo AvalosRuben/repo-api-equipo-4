@@ -40,9 +40,5 @@ return [
     'username' => env('ODOO_USERNAME'),
     'password' => env('ODOO_PASSWORD'),
 ],
-'prestashop' => [
-    'url' => env('PRESTASHOP_URL'),
-    'ws_key' => env('PRESTASHOP_WS_KEY')
-]
 
 ];
