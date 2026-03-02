@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Services\OdooService;
 use App\Services\PrestaShopService;
+use Illuminate\Http\Request;
 
 // GET  - 10 en 10
 Route::get('/odoo/productos', function (OdooService $odoo) {
@@ -99,6 +100,24 @@ Route::get('/prestashop/clientes', function (PrestaShopService $prestashop) {
 
 Route::get('/prestashop/productos/clave/{clave}', function ($clave, App\Services\PrestaShopService $prestashop) {
     return response()->json($prestashop->getProductBySku($clave));
+});
+
+Route::match(['put', 'patch'], '/prestashop/productos/clave/{clave}', function (Request $request, $clave, PrestaShopService $prestashop) {
+    $payload = $request->only(['name', 'description', 'price', 'active', 'reference']);
+    $method = strtoupper((string) $request->query('method', $request->method()));
+
+    $result = $prestashop->updateProductByReference($clave, $payload, $method);
+
+    if (($result['status'] ?? 'error') === 'success') {
+        return response()->json($result);
+    }
+
+    $code = (int) ($result['errors'][0]['code'] ?? 400);
+    if ($code < 100 || $code > 599) {
+        $code = 400;
+    }
+
+    return response()->json($result, $code);
 });
 
 // desactivar producto por referencia

@@ -329,4 +329,127 @@ private function updateStock(int $productId, int $quantity): void
         ];
     }
 
+    public function updateProductByReference(string $reference, array $payload, string $method = 'PATCH'): array
+    {
+        $existing = $this->getProductBySku($reference);
+
+        if (($existing['status'] ?? 'error') !== 'success' || empty($existing['data'])) {
+            return [
+                'status' => 'error',
+                'data' => null,
+                'errors' => [
+                    [
+                        'code' => '404',
+                        'message' => 'Product not found by reference',
+                    ],
+                ],
+            ];
+        }
+
+        $product = $existing['data'][0] ?? null;
+        $id = (int) ($product['id'] ?? 0);
+
+        if ($id <= 0) {
+            return [
+                'status' => 'error',
+                'data' => null,
+                'errors' => [
+                    [
+                        'code' => '400',
+                        'message' => 'Invalid product id',
+                    ],
+                ],
+            ];
+        }
+
+        $name = trim((string) ($payload['name'] ?? $this->extractLanguageValue($product['name'] ?? null, '')));
+        $description = (string) ($payload['description'] ?? $this->extractLanguageValue($product['description'] ?? null, ''));
+        $price = number_format((float) ($payload['price'] ?? $product['price'] ?? 0), 6, '.', '');
+        $targetReference = trim((string) ($payload['reference'] ?? $product['reference'] ?? $reference));
+        $active = array_key_exists('active', $payload)
+            ? ((int) ((bool) $payload['active']))
+            : (int) ($product['active'] ?? 1);
+
+        $linkRewrite = strtolower(trim((string) preg_replace('/[^a-zA-Z0-9]+/', '-', $name), '-'));
+
+        $xml = <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<prestashop xmlns:xlink="http://www.w3.org/1999/xlink">
+    <product>
+        <id>{$id}</id>
+        <price>{$price}</price>
+        <reference><![CDATA[{$targetReference}]]></reference>
+        <active>{$active}</active>
+        <name>
+            <language id="1"><![CDATA[{$name}]]></language>
+        </name>
+        <description>
+            <language id="1"><![CDATA[{$description}]]></language>
+        </description>
+        <link_rewrite>
+            <language id="1"><![CDATA[{$linkRewrite}]]></language>
+        </link_rewrite>
+    </product>
+</prestashop>
+XML;
+
+        $httpMethod = strtoupper($method);
+        if (!in_array($httpMethod, ['PUT', 'PATCH'], true)) {
+            $httpMethod = 'PATCH';
+        }
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/xml',
+        ])->withBody($xml, 'application/xml')
+          ->send($httpMethod, "{$this->url}/products/{$id}?ws_key={$this->ws_key}");
+
+        if (!$response->successful()) {
+            return [
+                'status' => 'error',
+                'data' => [
+                    'id' => $id,
+                    'reference' => $reference,
+                    'method' => $httpMethod,
+                ],
+                'errors' => [
+                    [
+                        'code' => (string) $response->status(),
+                        'message' => 'Error updating product',
+                        'details' => $response->body(),
+                    ],
+                ],
+            ];
+        }
+
+        return [
+            'status' => 'success',
+            'data' => [
+                'id' => $id,
+                'reference' => $targetReference,
+                'method' => $httpMethod,
+            ],
+            'errors' => [],
+        ];
+    }
+
+    private function extractLanguageValue(mixed $value, string $fallback = ''): string
+    {
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (is_array($value)) {
+            if (isset($value['value']) && is_string($value['value'])) {
+                return $value['value'];
+            }
+
+            $first = $value[0] ?? null;
+            if (is_array($first) && isset($first['value']) && is_string($first['value'])) {
+                return $first['value'];
+            }
+        }
+
+        return $fallback;
+    }
+
 }
