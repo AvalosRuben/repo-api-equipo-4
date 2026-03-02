@@ -199,7 +199,6 @@ class OdooService
                 [['id', '=', $id]]
             ],
             [
-                'fields' => ['id', 'name', 'list_price'],
                 'limit'  => 1,
             ]
         );
@@ -222,6 +221,23 @@ class OdooService
                 'order'  => 'id asc',
             ]
         );
+    }
+
+    public function getProductByReference(string $reference): array
+    {
+        $result = $this->executeKw(
+            'product.template',
+            'search_read',
+            [
+                [['default_code', '=', $reference]]
+            ],
+            [
+                'fields' => ['name', 'description', 'list_price', 'qty_available', 'default_code'],
+                'limit'  => 1,
+            ]
+        );
+
+        return $result[0] ?? [];
     }
 
 

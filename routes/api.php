@@ -129,7 +129,37 @@ Route::get('/prestashop/ordenes/{reference}', function ($reference, PrestaShopSe
     ]);
 });
 
+Route::post('/create-product-by-reference/{reference}', function ($reference, OdooService $odoo, PrestaShopService $prestashop){
+    $prestashopQuery = $prestashop->getProductBySku($reference);
+    if (!(isset($prestashopQuery['errors'][0]['code']) && $prestashopQuery['errors'][0]['code'] == 404)) {
+        return response()->json([
+            'status' => 'error',
+            'data' => null,
+            'errors' => [
+                [
+                    'code' => '409',
+                    'message' => 'Conflict.'
+                ]
+            ]
+        ], 409);
+    }
 
+    $odooQuery = $odoo->getProductByReference($reference);
+    if ($odooQuery['qty_available'] == '0' || $odooQuery['list_price'] == '0') {
+        return response()->json([
+            'status' => 'error',
+            'data' => null,
+            'errors' => [
+                [
+                    'code' => '400',
+                    'message' => 'Bad Request.'
+                ]
+            ]
+        ], 400);
+    }
+
+    return $prestashop->createProduct($odooQuery);
+});
 
 Route::get('/sync/odoo-to-prestashop', function (OdooService $odoo, PrestaShopService $presta) {
 
