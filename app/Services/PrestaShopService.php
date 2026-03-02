@@ -66,7 +66,7 @@ public function getProductBySku(string $sku): array
     $ws_key = $this->ws_key;
 
     $response = Http::get("{$url}/products", [
-        'filter[reference]' => sprintf('["%s"]', $sku),
+        'filter[reference]' => sprintf('%s', $sku),
         'display' => 'full',
         'output_format' => 'JSON',
         'ws_key' => $ws_key,
