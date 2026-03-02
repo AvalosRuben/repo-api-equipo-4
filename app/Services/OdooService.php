@@ -84,22 +84,22 @@ class OdooService
     }
 
 
-    // public function getProducts(int $limit = 10, int $offset = 0): array
-    // {
-    //     return $this->executeKw(
-    //         'product.template',
-    //         'search_read',
-    //         [
-    //             []
-    //         ],
-    //         [
-    //             'fields' => ['id', 'name', 'list_price'],
-    //             'limit'  => $limit,
-    //             'offset' => $offset,
-    //             'order'  => 'id asc',
-    //         ]
-    //     );
-    // }
+    public function getProducts(int $limit = 10, int $offset = 0): array
+    {
+        return $this->executeKw(
+            'product.template',
+            'search_read',
+            [
+                []
+            ],
+            [
+                'fields' => ['id', 'name', 'list_price'],
+                'limit'  => $limit,
+                'offset' => $offset,
+                'order'  => 'id asc',
+            ]
+        );
+    }
 
     public function getProductById(int $id): array
     {
@@ -143,23 +143,6 @@ class OdooService
         );
     }
 
-    public function getProducts(int $limit = 100, int $offset = 0): array
-    {
-        return $this->executeKw(
-            'product.template',
-            'search_read',
-            [
-                [['sale_ok', '=', true]] //productos que se puedan vender
-            ],
-            [
-                'fields' => ['id', 'name', 'list_price', 'categ_id', 'description_sale'],
-                'limit'  => $limit,
-                'offset' => $offset,
-                'order'  => 'id asc',
-            ]
-        );
-    }
-
     public function getCategoriesByProducts(int $limit = 100, int $offset = 0): array
     {
         $products = $this->getProducts($limit, $offset);
@@ -189,7 +172,41 @@ class OdooService
         return array_values($categories);
     }
 
-    public function getProviders(int $limit = 10, int $offset = 0): array
+     # Basically the same as getProducts except it shows their stock instead. Incredible thanks mejia
+     public function getStock(int $limit = 10, int $offset = 0): array
+    {
+        return $this->executeKw(
+            'product.template',
+            'search_read',
+            [
+                []
+            ],
+            [
+                'fields' => ['id', 'name', 'qty_available'],
+                'limit'  => $limit,
+                'offset' => $offset,
+                'order'  => 'id desc',
+            ]
+        );
+    }
+
+    public function getStockById(int $id): array
+    {
+        $result = $this->executeKw(
+            'product.template',
+            'search_read',
+            [
+                [['id', '=', $id]]
+            ],
+            [
+                'limit'  => 1,
+            ]
+        );
+
+        return $result[0] ?? [];
+    }
+
+    public function getSuppliers(int $limit = 10, int $offset = 0): array
     {
         return $this->executeKw(
             'res.partner',
@@ -205,4 +222,57 @@ class OdooService
             ]
         );
     }
+
+    public function getProductByReference(string $reference): array
+    {
+        $result = $this->executeKw(
+            'product.template',
+            'search_read',
+            [
+                [['default_code', '=', $reference]]
+            ],
+            [
+                'fields' => ['name', 'description', 'list_price', 'qty_available', 'default_code'],
+                'limit'  => 1,
+            ]
+        );
+
+        return $result[0] ?? [];
+    }
+
+
+   public function getAllProducts(): array
+    {
+    $allProducts = [];
+    $offset      = 0;
+    $batchSize   = 100;
+
+    do {
+        $batch = $this->executeKw(
+            'product.template',
+            'search_read',
+            [[]],
+            [
+                'fields' => [
+                    'id',
+                    'name',
+                    'list_price',
+                    'qty_available',
+                    'default_code',
+                    'description',
+                ],
+                'limit'  => $batchSize,
+                'offset' => $offset,
+                'order'  => 'id asc',
+            ]
+        );
+
+        $allProducts = array_merge($allProducts, $batch);
+        $offset += $batchSize;
+
+    } while (count($batch) === $batchSize);
+
+    return $allProducts;
+}
+
 }
