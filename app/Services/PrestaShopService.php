@@ -279,4 +279,54 @@ private function updateStock(int $productId, int $quantity): void
       ->put("{$url}/stock_availables/{$stockId}?ws_key={$ws_key}");
 }
 
+    // Desactiva un producto en PrestaShop.
+    public function desactivarProductoPorSku(string $sku): array
+    {
+        $resp = $this->getProductBySku($sku);
+        if ($resp['status'] !== 'success' || empty($resp['data'])) {
+            return [
+                'status' => 'error',
+                'message' => 'Producto no encontrado',
+            ];
+        }
+
+        $product = $resp['data'][0];
+        $id = $product['id'] ?? null;
+        if (empty($id)) {
+            return [
+                'status' => 'error',
+                'message' => 'ID del producto no disponible',
+            ];
+        }
+
+        $xml = <<<XML
+    <?xml version="1.0" encoding="UTF-8"?>
+    <prestashop xmlns:xlink="http://www.w3.org/1999/xlink">
+    <product>
+        <id>{$id}</id>
+        <active>0</active>
+    </product>
+    </prestashop>
+    XML;
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/xml',
+        ])->withBody($xml, 'application/xml')
+          ->put("{$this->url}/products/{$id}?ws_key={$this->ws_key}");
+
+        if (!$response->successful()) {
+            return [
+                'status' => 'error',
+                'message' => 'Error al desactivar producto',
+                'details' => $response->body(),
+            ];
+        }
+
+        return [
+            'status' => 'success',
+            'message' => 'Producto desactivado',
+            'id' => $id,
+        ];
+    }
+
 }

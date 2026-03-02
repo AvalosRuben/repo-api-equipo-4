@@ -100,6 +100,11 @@ Route::get('/prestashop/clientes', function (PrestaShopService $prestashop) {
 Route::get('/prestashop/productos/clave/{clave}', function ($clave, App\Services\PrestaShopService $prestashop) {
     return response()->json($prestashop->getProductBySku($clave));
 });
+
+// desactivar producto por referencia
+Route::get('/prestashop/productos/desactivar/{clave}', function ($clave, App\Services\PrestaShopService $prestashop) {
+    return response()->json($prestashop->desactivarProductoPorSku($clave));
+});
 // GET Orden por REFERENCE (Prestashop)
 Route::get('/prestashop/ordenes/{reference}', function ($reference, PrestaShopService $prestashop) {
     $order = $prestashop->getOrderByReference($reference);
