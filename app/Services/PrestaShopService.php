@@ -312,7 +312,7 @@ private function updateStock(int $productId, int $quantity): void
         $response = Http::withHeaders([
             'Content-Type' => 'application/xml',
         ])->withBody($xml, 'application/xml')
-          ->put("{$this->url}/products/{$id}?ws_key={$this->ws_key}");
+          ->patch("{$this->url}/products/{$id}?ws_key={$this->ws_key}");
 
         if (!$response->successful()) {
             return [
